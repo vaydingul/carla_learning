@@ -48,6 +48,21 @@ class Branch(nn.Module):
 
         return x
 
+class CILRSLoss(nn.Module):
+    """Loss function for CILRS"""
+    def __init__(self, weight = 0.7):
+        super(CILRSLoss, self).__init__()
+        self.weight = weight
+        self.speed_loss = nn.L1Loss()
+        self.action_loss = nn.MSELoss()
+
+    def forward(self, speed_pred, speed_gt, action_pred, action_gt):
+        """L1 loss for speed and L2 loss for action"""
+        speed_loss = self.speed_loss(speed_pred, speed_gt)
+        action_loss = self.action_loss(action_pred, action_gt)
+        return (1-self.weight) * speed_loss + self.weight * action_loss
+
+
 class CILRS(nn.Module):
     """A CILRS imitation learning agent ."""
     def __init__(self, num_commands):
@@ -58,7 +73,9 @@ class CILRS(nn.Module):
         self.speed_encoder = Encoder(1, 512, 512, 3)
         self.concatenate = Concatenate()
         self.branched_encoder = Branch(512, 512, 512, 3, num_commands)
-
+        self.loss_criterion = CILRSLoss()
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        
     def forward(self, img, speed, command):
         
         x1 = self.resnet(img)
@@ -67,3 +84,4 @@ class CILRS(nn.Module):
         speed_head = self.speed_encoder(x1)
         action_head = self.branched_encoder(latent, command)
         return speed_head, action_head
+
