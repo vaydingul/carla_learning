@@ -25,8 +25,12 @@ class Evaluator():
         # Predict
         _, action = self.model(rgb, command, speed)
         # Convert to numpy
-        
-        return action
+        steer, acceleration = action.detach().numpy()
+        # Generate action
+        throttle = (acceleration >= 0) * acceleration
+        brake = (acceleration < 0) * -acceleration
+
+        return throttle, steer, brake
 
     def take_step(self, state):
         rgb = state["rgb"]

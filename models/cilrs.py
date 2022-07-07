@@ -102,5 +102,6 @@ class CILRS(nn.Module):
         latent = self.concatenate(x1, x2)
         speed_head = self.speed_encoder(x1)
         action_head = self.branched_encoder(latent, command)
+        
         return speed_head, action_head
 

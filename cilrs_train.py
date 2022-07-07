@@ -5,6 +5,7 @@ from expert_dataset import ExpertDataset, LearningType
 from models.cilrs import CILRS
 import matplotlib.pyplot as plt
 
+
 def validate(model, dataloader):
     """Validate CILRS model performance on the validation dataset"""
     model.eval()
@@ -12,9 +13,9 @@ def validate(model, dataloader):
     counter = 0
     with torch.no_grad():
         for batch in dataloader:
-            image, command, speed, steer, throttle, break_ = batch
+            image, command, speed, steer, throttle, brake = batch
             speed_pred, action_pred = model(image, speed, command)
-            loss = model.loss(speed_pred, speed, action_pred, torch.cat((steer, throttle, break_), dim=1))
+            loss = model.loss(speed_pred, speed, action_pred, torch.cat((steer, throttle - brake), dim=1))
             test_loss += loss.item()
             counter += image.shape[0] # batch size
 
@@ -29,9 +30,9 @@ def train(model, dataloader):
     for batch in dataloader:
         model.optimizer.zero_grad()
 
-        image, command, speed, steer, throttle, break_ = batch
+        image, command, speed, steer, throttle, brake = batch
         speed_pred, action_pred = model(image, speed, command)
-        loss = model.loss(speed_pred, speed, action_pred, torch.cat((steer, throttle, break_), dim=1))
+        loss = model.loss(speed_pred, speed, action_pred, torch.cat((steer, throttle - brake), dim=1))
         loss.backward()
         model.optimizer.step()
 

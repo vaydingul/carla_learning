@@ -1,0 +1,66 @@
+input_image_size : [512, 512]
+input_image_channels : 3
+input_image_format : "BRG"
+input_image_type : "uint8"
+
+image_encoder_type : "vgg16"
+
+#measurement_encoder_input_dimension : 2
+#measurement_encoder_hidden_layer_dimensions:
+# - 512
+# - 512
+#measurement_encoder_output_dimension : 512
+#measurement_encoder_hidden_activation : "relu"
+#measurement_encoder_final_activation : "relu"
+
+#speed_encoder_input_dimension : 1
+#speed_encoder_layer_dimensions:
+#  - 512
+#  - 512
+#speed_encoder_output_dimension : 512
+#speed_encoder_hidden_activation : "relu"
+#speed_encoder_final_activation : "relu"
+
+
+#branched_encoder_input_dimension : 1000
+#branched_encoder_layer_dimensions:
+#  - dimension : 512
+#  - dimension : 512
+#branched_encoder_output_dimension : 2
+#branched_encoder_hidden_activation : "relu"
+#branched_encoder_final_activation : "tanh"
+
+lane_distance_encoder_input_dimension : 1000
+lane_distance_encoder_layer_dimensions:
+  - dimension : 512
+  - dimension : 512
+lane_distance_encoder_output_dimension : 1
+lane_distance_encoder_hidden_activation : "relu"
+lane_distance_encoder_final_activation : "relu"
+
+lane_angle_encoder_input_dimension : 1000
+lane_angle_encoder_layer_dimensions:
+  - dimension : 512
+  - dimension : 512
+lane_angle_encoder_output_dimension : 1
+lane_angle_encoder_hidden_activation : "relu"
+lane_angle_encoder_final_activation : "sigmoid"
+
+traffic_light_distance_encoder_input_dimension : 1000
+traffic_light_distance_encoder_layer_dimensions:
+  - dimension : 512
+  - dimension : 512
+traffic_light_distance_encoder_output_dimension : 1
+traffic_light_distance_encoder_hidden_activation : "relu"
+traffic_light_distance_encoder_final_activation : "relu"
+
+traffic_light_state_encoder_input_dimension : 1000
+traffic_light_state_encoder_layer_dimensions:
+  - dimension : 512
+  - dimension : 512
+traffic_light_state_encoder_output_dimension : 1
+traffic_light_state_encoder_hidden_activation : "relu"
+traffic_light_state_encoder_final_activation : "sigmoid"
+
+number_of_commands :  6
+learning_rate : 0.0001

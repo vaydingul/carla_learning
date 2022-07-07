@@ -17,7 +17,7 @@ speed_encoder_input_dimension : 1
 speed_encoder_layer_dimensions:
   - 512
   - 512
-speed_encoder_output_dimension : 512
+speed_encoder_output_dimension : 1
 speed_encoder_hidden_activation : "relu"
 speed_encoder_final_activation : "relu"
 
@@ -26,7 +26,7 @@ branched_encoder_input_dimension : 1512
 branched_encoder_layer_dimensions:
   - dimension : 512
   - dimension : 512
-branched_encoder_output_dimension : 512
+branched_encoder_output_dimension : 2
 branched_encoder_hidden_activation : "relu"
 branched_encoder_final_activation : "tanh"
 

@@ -1,8 +1,9 @@
 import torch
 from torch.utils.data import DataLoader
 
-from expert_dataset import ExpertDataset
+from expert_dataset import ExpertDataset, LearningType
 from models.affordance_predictor import AffordancePredictor
+import matplotlib.pyplot as plt
 
 
 def validate(model, dataloader):
