@@ -70,6 +70,7 @@ class ExpertDataset(Dataset):
                 self._tl_dist[k] = json_content["tl_dist"]
                 self._is_junction[k] = json_content["is_junction"]
 
+                
 
         
 
@@ -82,11 +83,11 @@ class ExpertDataset(Dataset):
 
         elif self.learning_type == 1:
 
-            pass
-
+            return self._images[index], self._command[index], self._lane_dist[index], self._lane_angle[index], self._tl_dist[index], self._tl_state[index]
+             
         elif self.learning_type == 2:
             
-            pass
+            NotImplementedError("Data acquisition for reinforcement learning is not implemented yet")
 
         else:
 
