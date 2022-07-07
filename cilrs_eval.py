@@ -4,6 +4,7 @@ import yaml
 
 from carla_env.env import Env
 
+import torch
 
 class Evaluator():
     def __init__(self, env, config):
@@ -11,13 +12,21 @@ class Evaluator():
         self.config = config
         self.agent = self.load_agent()
 
-    def load_agent():
-        # Your code here
-        pass
+    def load_agent(self):
+        # Load model from CILRS checkpoint
+        self.model = torch.load("cilrs_model.ckpt")
 
-    def generate_action(rgb, command, speed):
-        # Your code here
-        pass
+    def generate_action(self, rgb, command, speed):
+        """Generate action from model"""
+        # Convert to tensor
+        rgb = torch.from_numpy(rgb).float().unsqueeze(0)
+        command = torch.from_numpy(command).float().unsqueeze(0)
+        speed = torch.from_numpy(speed).float().unsqueeze(0)
+        # Predict
+        _, action = self.model(rgb, command, speed)
+        # Convert to numpy
+        
+        return action
 
     def take_step(self, state):
         rgb = state["rgb"]
