@@ -102,14 +102,14 @@ class AffordancePredictor(nn.Module):
     def __init__(self, config):
         super(AffordancePredictor, self).__init__()
         self.image_encoder = VGG16()
-        self.lane_distance_task_block = TaskBlock(config["encoder_input_size"], config["encoder_output_size"], config["encoder_hidden_layer_dimensions"], config["number_of_commands"], 
-                                        activation_function_map[config["branched_encoder_hidden_activation"]], activation_function_map[config["encoder_final_activation"]], conditional=True)
-        self.route_angle_task_block = TaskBlock(config["encoder_input_size"], config["encoder_output_size"], config["encoder_hidden_layer_dimensions"], config["number_of_commands"], 
-                                        activation_function_map[config["branched_encoder_hidden_activation"]], activation_function_map[config["encoder_final_activation"]], conditional=True)
-        self.traffic_light_distance_task_block = TaskBlock(config["encoder_input_size"], config["encoder_output_size"], config["encoder_hidden_layer_dimensions"], config["number_of_commands"], 
-                                        activation_function_map[config["branched_encoder_hidden_activation"]], activation_function_map[config["encoder_final_activation"]], conditional=False)
-        self.traffic_light_state_task_block = TaskBlock(config["encoder_input_size"], config["encoder_output_size"], config["encoder_hidden_layer_dimensions"], config["number_of_commands"], 
-                                        activation_function_map[config["branched_encoder_hidden_activation"]], activation_function_map[config["encoder_final_activation"]], conditional=False)
+        self.lane_distance_task_block = TaskBlock(config["lane_distance_encoder_input_size"], config["lane_distance_encoder_output_size"], config["lane_distance_encoder_hidden_layer_dimensions"], config["number_of_commands"], 
+                                        activation_function_map[config["lane_distance_encoder_hidden_activation"]], activation_function_map[config["lane_distance_encoder_final_activation"]], conditional=True)
+        self.route_angle_task_block = TaskBlock(config["lane_angle_encoder_input_size"], config["lane_angle_encoder_output_size"], config["lane_angle_encoder_hidden_layer_dimensions"], config["number_of_commands"], 
+                                        activation_function_map[config["lane_angle_encoder_hidden_activation"]], activation_function_map[config["lane_angle_encoder_final_activation"]], conditional=True)
+        self.traffic_light_distance_task_block = TaskBlock(config["traffic_light_distance_encoder_input_size"], config["traffic_light_distance_encoder_output_size"], config["traffic_light_distance_encoder_hidden_layer_dimensions"], config["number_of_commands"], 
+                                        activation_function_map[config["traffic_light_distance_encoder_hidden_activation"]], activation_function_map[config["traffic_light_distance_encoder_final_activation"]], conditional=False)
+        self.traffic_light_state_task_block = TaskBlock(config["traffic_light_state_encoder_input_size"], config["traffic_light_state_encoder_output_size"], config["traffic_light_state_encoder_hidden_layer_dimensions"], config["number_of_commands"], 
+                                        activation_function_map[config["traffic_light_state_encoder_hidden_activation"]], activation_function_map[config["traffic_light_state_encoder_final_activation"]], conditional=False)
 
     def forward(self, img, command):
 
