@@ -27,19 +27,28 @@ class Branch(nn.Module):
 
         return x
 
+
 class Encoder(nn.Module):
     """An feed-forward network encoder which consists of a sequence of linear layers"""
-    def __init__(self, input_size, output_size, hidden_size, num_layers):
+    def __init__(self, input_size, output_size, hidden_sizes, hidden_activation, final_activation):
         super(Encoder, self).__init__()
-        self.layers = nn.ModuleList([nn.Linear(input_size, hidden_size)])
-        self.layers.extend([nn.Linear(hidden_size, hidden_size) for _ in range(num_layers - 2)])
-        self.layers.extend(nn.Linear(hidden_size, output_size))
+
+        self.layers = nn.ModuleList([nn.Linear(input_size, hidden_sizes[0])])
+        self.layers.extend([nn.Linear(hidden_sizes[k], hidden_sizes[k + 1]) for k in range(len(hidden_sizes))])
+        self.layers.append(nn.Linear(hidden_sizes[-1], output_size))
+        self.hidden_activation = hidden_activation()
+        self.final_activation = final_activation()
 
     def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
-            x = nn.ReLU()(x)
+        for k in range(len(self.layers) - 1):
+            x = self.layers[k](x)
+            x = self.hidden_activation(x)
+        
+        x = self.layers[-1](x)
+        x = self.final_activation(x)
+
         return x
+
 
 
 class TaskBlock(nn.Module):

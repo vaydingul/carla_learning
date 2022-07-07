@@ -1,28 +1,43 @@
 import torch.nn as nn
 import torch.hub as hub
 import torch
+activation_function_map = {"relu" : nn.ReLU, "tanh" : nn.Tanh}
 
-class ResNet18(nn.Module):
+
+
+
+
+
+
+
+class ResNet(nn.Module):
     """Basic implementation of ResNet18 from PyTorch Hub"""
-    def __init__(self):
-        super(ResNet18, self).__init__()
-        self.model = hub.load('pytorch/vision:v0.6.0', 'resnet18', pretrained=True)
+    def __init__(self, resnet_type):
+        super(ResNet, self).__init__()
+        self.model = hub.load('pytorch/vision:v0.6.0', resnet_type, pretrained=True)
 
     def forward(self, x):
         return self.model(x)
 
 class Encoder(nn.Module):
     """An feed-forward network encoder which consists of a sequence of linear layers"""
-    def __init__(self, input_size, output_size, hidden_size, num_layers):
+    def __init__(self, input_size, output_size, hidden_sizes, hidden_activation, final_activation):
         super(Encoder, self).__init__()
-        self.layers = nn.ModuleList([nn.Linear(input_size, hidden_size)])
-        self.layers.extend([nn.Linear(hidden_size, hidden_size) for _ in range(num_layers - 2)])
-        self.layers.extend(nn.Linear(hidden_size, output_size))
+
+        self.layers = nn.ModuleList([nn.Linear(input_size, hidden_sizes[0])])
+        self.layers.extend([nn.Linear(hidden_sizes[k], hidden_sizes[k + 1]) for k in range(len(hidden_sizes))])
+        self.layers.append(nn.Linear(hidden_sizes[-1], output_size))
+        self.hidden_activation = hidden_activation()
+        self.final_activation = final_activation()
 
     def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
-            x = nn.ReLU()(x)
+        for k in range(len(self.layers) - 1):
+            x = self.layers[k](x)
+            x = self.hidden_activation(x)
+        
+        x = self.layers[-1](x)
+        x = self.final_activation(x)
+
         return x
 
 class Concatenate(nn.Module):
@@ -35,12 +50,12 @@ class Concatenate(nn.Module):
 
 class Branch(nn.Module):
     """A command-based branch switching network"""
-    def __init__(self, input_size, output_size, hidden_size, num_layers, num_branches):
+    def __init__(self, input_size, output_size, hidden_sizes, num_branches, hidden_activation, final_activation):
         """Create different branches of encoders based on the num_branches"""
         super(Branch, self).__init__()
         
         self.num_branches = num_branches
-        self.branches = nn.ModuleList([self.__class__(input_size, output_size, hidden_size, num_layers) for _ in range(num_branches)])
+        self.branches = nn.ModuleList([self.__class__(input_size, output_size, hidden_sizes, hidden_activation, final_activation) for _ in range(num_branches)])
     
     def forward(self, x, command):
         
@@ -65,16 +80,20 @@ class CILRSLoss(nn.Module):
 
 class CILRS(nn.Module):
     """A CILRS imitation learning agent ."""
-    def __init__(self, num_commands):
+    def __init__(self, config):
         super(CILRS, self).__init__()
 
-        self.resnet = ResNet18()
-        self.measurement_encoder = Encoder(1, 512, 512, 3)
-        self.speed_encoder = Encoder(1, 512, 512, 3)
+        self.resnet = ResNet()
+        self.measurement_encoder = Encoder(config["measurement_encoder_input_size"], config["measurement_encoder_output_size"], config["measurement_encoder_hidden_layer_dimensions"], 
+                                            activation_function_map[config["measurement_encoder_hidden_activation"]], activation_function_map[config["measurement_encoder_final_activation"]])
+        self.speed_encoder = Encoder(config["speed_encoder_input_size"], config["speed_encoder_output_size"], config["speed_encoder_hidden_layer_dimensions"],
+                                        activation_function_map[config["speed_encoder_hidden_activation"]], activation_function_map[config["speed_encoder_final_activation"]])                
         self.concatenate = Concatenate()
-        self.branched_encoder = Branch(512, 512, 512, 3, num_commands)
+        self.branched_encoder = Branch(config["branched_encoder_input_size"], config["branched_encoder_output_size"], config["branched_encoder_hidden_layer_dimensions"], config["number_of_commands"], 
+                                        activation_function_map[config["branched_encoder_hidden_activation"]], activation_function_map[config["branched_encoder_final_activation"]])
+
         self.loss_criterion = CILRSLoss()
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=config["learning_rate"])
         
     def forward(self, img, speed, command):
         
