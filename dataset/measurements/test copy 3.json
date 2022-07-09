@@ -1,0 +1,16 @@
+{
+	"steer": 1,
+	"throttle": 1,
+	"brake": 0,
+	"speed": 0,
+	"command": 0,
+	"route_dist": 1,
+	"route_angle": 0,
+	"lane_dist": 1,
+	"lane_angle": 0,
+	"hazard": 0,
+	"hazard_dist": 1,
+	"tl_state": 1,
+	"tl_dist": 1,
+	"is_junction": 0
+}
