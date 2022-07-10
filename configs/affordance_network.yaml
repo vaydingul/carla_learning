@@ -31,7 +31,7 @@ image_encoder_type : "vgg16"
 #branched_encoder_final_activation : "tanh"
 
 lane_distance_encoder_input_dimension : 1000
-lane_distance_encoder_layer_dimensions:
+lane_distance_encoder_hidden_layer_dimensions:
   - 512
   - 512
 lane_distance_encoder_output_dimension : 1
@@ -39,7 +39,7 @@ lane_distance_encoder_hidden_activation : "relu"
 lane_distance_encoder_final_activation : "relu"
 
 lane_angle_encoder_input_dimension : 1000
-lane_angle_encoder_layer_dimensions:
+lane_angle_encoder_hidden_layer_dimensions:
   - 512
   - 512
 lane_angle_encoder_output_dimension : 1
@@ -47,7 +47,7 @@ lane_angle_encoder_hidden_activation : "relu"
 lane_angle_encoder_final_activation : "sigmoid"
 
 traffic_light_distance_encoder_input_dimension : 1000
-traffic_light_distance_encoder_layer_dimensions:
+traffic_light_distance_encoder_hidden_layer_dimensions:
   - 512
   - 512
 traffic_light_distance_encoder_output_dimension : 1
@@ -55,7 +55,7 @@ traffic_light_distance_encoder_hidden_activation : "relu"
 traffic_light_distance_encoder_final_activation : "relu"
 
 traffic_light_state_encoder_input_dimension : 1000
-traffic_light_state_encoder_layer_dimensions:
+traffic_light_state_encoder_hidden_layer_dimensions:
   - 512
   - 512
 traffic_light_state_encoder_output_dimension : 1

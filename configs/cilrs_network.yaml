@@ -5,7 +5,7 @@ input_image_type : "uint8"
 
 image_encoder_type : "resnet18"
 
-measurement_encoder_input_dimension : 2
+measurement_encoder_input_dimension : 1
 measurement_encoder_hidden_layer_dimensions:
   - 512
   - 512
@@ -13,8 +13,8 @@ measurement_encoder_output_dimension : 512
 measurement_encoder_hidden_activation : "relu"
 measurement_encoder_final_activation : "relu"
 
-speed_encoder_input_dimension : 1
-speed_encoder_layer_dimensions:
+speed_encoder_input_dimension : 1000
+speed_encoder_hidden_layer_dimensions:
   - 512
   - 512
 speed_encoder_output_dimension : 1
@@ -23,7 +23,7 @@ speed_encoder_final_activation : "relu"
 
 
 branched_encoder_input_dimension : 1512
-branched_encoder_layer_dimensions:
+branched_encoder_hidden_layer_dimensions:
   - 512
   - 512
 branched_encoder_output_dimension : 2
