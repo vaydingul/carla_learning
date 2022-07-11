@@ -17,13 +17,15 @@ def get_config(file_path):
 def validate(model, dataloader):
     """Validate CILRS model performance on the validation dataset"""
     model.eval()
+    model.to('cuda:0')
+
     test_loss = 0
     counter = 0
     with torch.no_grad():
-        for batch in dataloader:
+        for batch in tqdm.tqdm(dataloader, colour="blue"):
             image, command, speed, steer, throttle, brake = batch
-            speed_pred, action_pred = model(image, speed, command)
-            loss = model.loss_criterion(speed_pred, speed, action_pred, torch.cat((steer, throttle - brake), dim=1))
+            speed_pred, action_pred = model(image.to('cuda:0'), speed.to('cuda:0'), command.to('cuda:0'))
+            loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
             test_loss += loss.item()
             counter += image.shape[0] # batch size
 
@@ -34,14 +36,15 @@ def validate(model, dataloader):
 def train(model, dataloader):
     """Train CILRS model on the training dataset for one epoch"""
     model.train()
+    model.to('cuda:0')
     train_loss = 0
     counter = 0
-    for batch in dataloader:
+    for batch in tqdm.tqdm(dataloader, colour="green"):
         model.optimizer.zero_grad()
 
-        image, command,  lane_dist, lane_angle, tl_dist, tl_state = batch
-        lane_dist_pred, lane_angle_pred, tl_dist_pred, tl_state_pred = model(image, command)
-        loss = model.loss_criterion(lane_dist_pred, lane_dist, lane_angle_pred, lane_angle, tl_dist_pred, tl_dist, tl_state_pred, tl_state)
+        image, command, speed, steer, throttle, brake = batch
+        speed_pred, action_pred = model(image.to('cuda:0'), speed.to('cuda:0'), command.to('cuda:0'))
+        loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
         loss.backward()
         model.optimizer.step()
         train_loss += loss.item()
@@ -65,8 +68,8 @@ def plot_losses(train_loss, val_loss):
     
 def main():
     # Change these paths to the correct paths in your downloaded expert dataset
-    train_root = os.path.join("dataset", "")
-    val_root = os.path.join("dataset", "")
+    train_root = os.path.join("dataset/train", "expert")
+    val_root = os.path.join("dataset/val", "expert")
 
     model = CILRS(get_config(os.path.join(Path("configs"), "cilrs_network.yaml")))
 
@@ -74,8 +77,8 @@ def main():
     val_dataset = ExpertDataset(val_root, LearningType.IMITATION)
 
     # You can change these hyper parameters freely, and you can add more
-    num_epochs = 50
-    batch_size = 5
+    num_epochs = 10
+    batch_size = 128
     save_path = "cilrs_model.ckpt"
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
@@ -84,9 +87,10 @@ def main():
 
     train_losses = []
     val_losses = []
-    for i in tqdm.tqdm(range(num_epochs)):
+    for i in tqdm.tqdm(range(num_epochs), colour="red"):
         train_losses.append(train(model, train_loader))
         val_losses.append(validate(model, val_loader))
+        print(train_losses[-1], val_losses[-1])
     torch.save(model, save_path)
     plot_losses(train_losses, val_losses)
 

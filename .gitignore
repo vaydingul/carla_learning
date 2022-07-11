@@ -20,3 +20,4 @@ notes.txt
 error.txt
 *.pt
 *.ckpt
+*.h5

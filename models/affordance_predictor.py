@@ -36,7 +36,7 @@ class Branch(nn.Module):
 
         output = []
         for (ix, c) in enumerate(command):
-            output.append(self.branches[int(c)](x[ix]))
+            output.append(self.branches[int(c-1)](x[ix]))
         x = self.stack(*output, dim=0)
         return x
 
