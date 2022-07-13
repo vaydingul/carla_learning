@@ -21,3 +21,5 @@ error.txt
 *.pt
 *.ckpt
 *.h5
+*.png
+*.json
