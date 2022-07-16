@@ -7,7 +7,7 @@ import yaml
 from agents.navigation.controller import VehiclePIDController
 
 from carla_env.env import Env
-from rl.tools.visualizer import RLVisualizer
+from rl.tools.visualizer import DummyVisualizer, RLVisualizer
 from utils.noiser import Noiser
 
 
@@ -22,7 +22,7 @@ class DataCollector():
         self._args_longitudinal_dict = {'K_P': 1.0, 'K_I': 0.05, 'K_D': 0.0, 'dt': 1/20}
 
         self.noiser = Noiser(config["fps"])
-        self.visualizer = RLVisualizer(config)
+        self.visualizer = DummyVisualizer(config)#RLVisualizer(config)
         self.saved_samples = 0
         self.step = 0
         self.prev_command = 3
