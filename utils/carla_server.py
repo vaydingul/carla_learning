@@ -33,7 +33,8 @@ def start_carla_server(port):
     kill_carla_server()
     carla_path = os.path.join(os.environ["CARLA_ROOT"], "CarlaUE4.sh")
     cmd = ["DISPLAY=", carla_path,
+            "-opengl",
            f"-carla-rpc-port={port}",
-           "-quality-level=Epic",
-           "-opengl"]
+           "-quality-level=Epic"
+           ]
     subprocess.Popen(cmd)
