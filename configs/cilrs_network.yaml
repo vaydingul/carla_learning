@@ -30,9 +30,9 @@ branched_encoder_output_dimension : 2
 branched_encoder_hidden_activation : "relu"
 branched_encoder_final_activation : "tanh"
 
-number_of_commands :  6
+number_of_commands : 4
 learning_rate : 0.0001
 loss_weight : 0.7
-num_epochs : 200
-batch_size : 157
+num_epochs : 25
+batch_size : 256
 save_path : "cilrs_model"
