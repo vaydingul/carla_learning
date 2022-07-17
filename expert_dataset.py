@@ -31,13 +31,13 @@ class ExpertDataset(Dataset):
         self.learning_type = learning_type
 
         # Fetch the folder content
-        rgb_files = sorted(os.listdir(os.path.join(self.data_root, "rgb")))
+        self.rgb_files = sorted(os.listdir(os.path.join(self.data_root, "rgb")))
         measurements_actions = sorted(os.listdir(
             os.path.join(self.data_root, "measurements")))
         self._length = len(rgb_files)
 
-        self._images = torch.zeros(
-            (self._length, 3, 512, 512), dtype=torch.float32)
+        #self._images = torch.zeros(
+        #    (self._length, 3, 512, 512), dtype=torch.float32)
         self._steer = torch.zeros((self._length, 1), dtype=torch.float32)
         self._throttle = torch.zeros((self._length, 1), dtype=torch.float32)
         self._brake = torch.zeros((self._length, 1), dtype=torch.float32)
@@ -53,11 +53,11 @@ class ExpertDataset(Dataset):
         self._tl_dist = torch.zeros((self._length, 1), dtype=torch.float32)
         self._is_junction = torch.zeros((self._length, 1), dtype=torch.float32)
 
-        for k in range(len(rgb_files)):
+        for k in range(len(self.rgb_files)):
             # Read images as a NumPy array
 
-            self._images[k] = torch.permute(torch.from_numpy(np.array(Image.open(
-                os.path.join(self.data_root, "rgb", rgb_files[k]))))[:, :, :3], (2, 0, 1))
+            #self._images[k] = torch.permute(torch.from_numpy(np.array(Image.open(
+            #    os.path.join(self.data_root, "rgb", rgb_files[k]))))[:, :, :3], (2, 0, 1))
             # Read steer angle command from json file
             with open(os.path.join(self.data_root, "measurements", measurements_actions[k]), "r") as f:
                 json_content = json.load(f)
@@ -85,14 +85,17 @@ class ExpertDataset(Dataset):
 
     def __getitem__(self, index):
         """Return RGB images and measurements"""
+        image_ = torch.permute(torch.from_numpy(np.array(Image.open(
+                os.path.join(self.data_root, "rgb", self.rgb_files[index]))))[:, :, :3], (2, 0, 1))
+            
 
         if self.learning_type == LearningType.IMITATION:
-
-            return self.transform(self._images[index]), self._command[index], self._speed[index], self._steer[index], self._throttle[index], self._brake[index]
+            
+            return self.transform(image_), self._command[index], self._speed[index], self._steer[index], self._throttle[index], self._brake[index]
 
         elif self.learning_type == LearningType.AFFORDANCE:
 
-            return self._images[index], self._command[index], self._lane_dist[index], self._lane_angle[index], self._tl_dist[index], self._tl_state[index]
+            return self.transform(image_), self._command[index], self._lane_dist[index], self._lane_angle[index], self._tl_dist[index], self._tl_state[index]
 
         elif self.learning_type == LearningType.REINFORCEMENT:
 
