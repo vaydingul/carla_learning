@@ -110,7 +110,8 @@ def main():
         train_losses.append(train(model, train_loader, i, run))
         val_losses.append(validate(model, val_loader, i, run))
         
-        if (i+1 % 5) == 0:
+        if ((i+1) % 5) == 0:
+            print("Alert time!")
             run.alert("Epoch-wise Info", "Epoch {}/{}".format(i + 1, num_epochs))
 
     torch.save(model, save_path)
