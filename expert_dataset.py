@@ -77,7 +77,7 @@ class ExpertDataset(Dataset):
                 self._is_junction[k] = json_content["is_junction"]
 
         self.transform = transforms.Compose([
-            transforms.Scale(1/255),
+            transforms.Lambda(lambda x: x/255),
             transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
