@@ -9,6 +9,7 @@ import yaml
 import tqdm
 import wandb
 from datetime import datetime
+import argparse
 
 def get_config(file_path):
     """Get the configuration of the model"""
@@ -73,7 +74,7 @@ def plot_losses(train_loss, val_loss):
     plt.show()
 
     
-def main():
+def main(config):
 
     
 
@@ -81,7 +82,7 @@ def main():
     train_root = os.path.join("dataset_expert/", "")
     val_root = os.path.join("dataset_expert/", "")
 
-    model_config = get_config(os.path.join(Path("configs"), "cilrs_network.yaml"))
+    model_config = get_config(os.path.join(Path("configs"), config))
     model = CILRS(model_config)
 
 
@@ -119,4 +120,7 @@ def main():
     run.finish()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="cilrs_network.yaml", help="Path to config file")
+    args = parser.parse_args()
+    main(args.config)
