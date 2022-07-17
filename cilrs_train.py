@@ -25,7 +25,6 @@ def validate(model, dataloader, epoch, run):
     counter = 0
     with torch.no_grad():
         for batch in dataloader:
-            print("val")
             image, command, speed, steer, throttle, brake = batch
             speed_pred, action_pred = model(image.to('cuda:0'), speed.to('cuda:0'), command.to('cuda:0'))
             loss, speed_loss, action_loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
@@ -46,7 +45,6 @@ def train(model, dataloader, epoch, run):
     train_loss = 0
     counter = 0
     for batch in dataloader:
-        print("train")
         model.optimizer.zero_grad()
 
         image, command, speed, steer, throttle, brake = batch
