@@ -34,7 +34,7 @@ class ExpertDataset(Dataset):
         self.rgb_files = sorted(os.listdir(os.path.join(self.data_root, "rgb")))
         measurements_actions = sorted(os.listdir(
             os.path.join(self.data_root, "measurements")))
-        self._length = len(rgb_files)
+        self._length = len(self.rgb_files)
 
         #self._images = torch.zeros(
         #    (self._length, 3, 512, 512), dtype=torch.float32)
@@ -77,6 +77,7 @@ class ExpertDataset(Dataset):
                 self._is_junction[k] = json_content["is_junction"]
 
         self.transform = transforms.Compose([
+            transforms.Scale(1/255),
             transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
@@ -86,7 +87,7 @@ class ExpertDataset(Dataset):
     def __getitem__(self, index):
         """Return RGB images and measurements"""
         image_ = torch.permute(torch.from_numpy(np.array(Image.open(
-                os.path.join(self.data_root, "rgb", self.rgb_files[index]))))[:, :, :3], (2, 0, 1))
+                os.path.join(self.data_root, "rgb", self.rgb_files[index])), dtype = np.float32))[:, :, :3], (2, 0, 1))
             
 
         if self.learning_type == LearningType.IMITATION:
