@@ -36,5 +36,5 @@ reward_weights:
     route_angle_reward : 1.0
     steering_reward : 0.2
 
-data_dir : "dataset_expert"
+data_dir : "dataset_val"
 feature_extractor_type : ""
