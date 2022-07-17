@@ -7,14 +7,16 @@ from models.cilrs import CILRS
 import matplotlib.pyplot as plt
 import yaml
 import tqdm
+import wandb
+from datetime import datetime
 
 def get_config(file_path):
     """Get the configuration of the model"""
     with open(file_path, "r") as f:
-        config = yaml.load(f)
+        config = yaml.safe_load(f)
     return config
     
-def validate(model, dataloader):
+def validate(model, dataloader, epoch, run):
     """Validate CILRS model performance on the validation dataset"""
     model.eval()
     model.to('cuda:0')
@@ -22,33 +24,40 @@ def validate(model, dataloader):
     test_loss = 0
     counter = 0
     with torch.no_grad():
-        for batch in tqdm.tqdm(dataloader, colour="blue"):
+        for batch in dataloader:
+            print("val")
             image, command, speed, steer, throttle, brake = batch
             speed_pred, action_pred = model(image.to('cuda:0'), speed.to('cuda:0'), command.to('cuda:0'))
-            loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
+            loss, speed_loss, action_loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
             test_loss += loss.item()
-            counter += image.shape[0] # batch size
+            step = epoch * len(dataloader.dataset) + counter * image.shape[0] + image.shape[0]
+            run.log({"val/step": step, "val/loss": loss.item(), "val/speed_loss": speed_loss.item(), "val/action_loss": action_loss.item()})
+
+            counter += 1#image.shape[0] # batch size
 
     # Report average loss on the validation dataset
     return test_loss / counter
 
 
-def train(model, dataloader):
+def train(model, dataloader, epoch, run):
     """Train CILRS model on the training dataset for one epoch"""
     model.train()
     model.to('cuda:0')
     train_loss = 0
     counter = 0
-    for batch in tqdm.tqdm(dataloader, colour="green"):
+    for batch in dataloader:
+        print("train")
         model.optimizer.zero_grad()
 
         image, command, speed, steer, throttle, brake = batch
         speed_pred, action_pred = model(image.to('cuda:0'), speed.to('cuda:0'), command.to('cuda:0'))
-        loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
+        loss, speed_loss, action_loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
         loss.backward()
         model.optimizer.step()
         train_loss += loss.item()
-        counter += image.shape[0] # batch size
+        step = epoch * len(dataloader.dataset) + counter * image.shape[0] + image.shape[0]
+        run.log({"train/step": step, "train/loss": loss.item(), "train/speed_loss": speed_loss.item(), "train/action_loss": action_loss.item()})
+        counter += 1#image.shape[0] # batch size
     # Report the latest loss on that epoch
     return train_loss / counter
 
@@ -67,33 +76,48 @@ def plot_losses(train_loss, val_loss):
 
     
 def main():
-    # Change these paths to the correct paths in your downloaded expert dataset
-    train_root = os.path.join("dataset/train", "expert")
-    val_root = os.path.join("dataset/val", "expert")
 
-    model = CILRS(get_config(os.path.join(Path("configs"), "cilrs_network.yaml")))
+    
+
+    # Change these paths to the correct paths in your downloaded expert dataset
+    train_root = os.path.join("dataset_expert/", "")
+    val_root = os.path.join("dataset_expert/", "")
+
+    model_config = get_config(os.path.join(Path("configs"), "cilrs_network.yaml"))
+    model = CILRS(model_config)
+
 
     train_dataset = ExpertDataset(train_root, LearningType.IMITATION)
     val_dataset = ExpertDataset(val_root, LearningType.IMITATION)
 
     # You can change these hyper parameters freely, and you can add more
-    num_epochs = 10
-    batch_size = 128
-    save_path = "cilrs_model.ckpt"
+    num_epochs = model_config["num_epochs"]
+    batch_size = model_config["batch_size"]
+    # Save path is the save path from config + date time in string format
+    datestr = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+    save_path = model_config["save_path"] + datestr + ".ckpt"
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
-                              drop_last=True)
+    run = wandb.init(project="carla_learning", group = "cilrs", name="cilrs_train", config = model_config)
+    run.define_metric("train/step")
+    run.define_metric("val/step")
+    run.define_metric(name = "train/*", step_metric = "train/step")
+    run.define_metric(name = "val/*", step_metric = "val/step")
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     train_losses = []
     val_losses = []
-    for i in tqdm.tqdm(range(num_epochs), colour="red"):
-        train_losses.append(train(model, train_loader))
-        val_losses.append(validate(model, val_loader))
-        print(train_losses[-1], val_losses[-1])
-    torch.save(model, save_path)
-    plot_losses(train_losses, val_losses)
+    for i in range(num_epochs):
+        train_losses.append(train(model, train_loader, i, run))
+        val_losses.append(validate(model, val_loader, i, run))
+        
+        if (i+1 % 5) == 0:
+            run.alert("Epoch-wise Info", "Epoch {}/{}".format(i + 1, num_epochs))
 
+    torch.save(model, save_path)
+    #plot_losses(train_losses, val_losses)
+    run.finish()
 
 if __name__ == "__main__":
     main()

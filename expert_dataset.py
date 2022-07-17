@@ -1,5 +1,4 @@
 from enum import Enum
-from git import Object
 from torch.utils.data import Dataset, DataLoader
 import os
 from PIL import Image
@@ -7,7 +6,7 @@ import numpy as np
 import json
 import torch
 from torchvision import transforms
-import h5py
+
 
 class LearningType(Enum):
 
@@ -32,49 +31,54 @@ class ExpertDataset(Dataset):
         self.learning_type = learning_type
 
         # Fetch the folder content
-        h5_files = sorted(os.listdir(self.data_root))
-        images = []
-        command = []
-        speed = []
-        throttle = []
-        steer = []
-        brake = []
+        rgb_files = sorted(os.listdir(os.path.join(self.data_root, "rgb")))
+        measurements_actions = sorted(os.listdir(
+            os.path.join(self.data_root, "measurements")))
+        self._length = len(rgb_files)
 
-        self.file_dict = {}
-        self._length = -1
+        self._images = torch.zeros(
+            (self._length, 3, 512, 512), dtype=torch.float32)
+        self._steer = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._throttle = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._brake = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._speed = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._command = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._route_dist = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._route_angle = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._lane_dist = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._lane_angle = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._hazard = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._hazard_dist = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._tl_state = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._tl_dist = torch.zeros((self._length, 1), dtype=torch.float32)
+        self._is_junction = torch.zeros((self._length, 1), dtype=torch.float32)
 
-        for h5_file in h5_files:
-            
-            print("Loading {}".format(h5_file))
-            
-            f = h5py.File(os.path.join(self.data_root, h5_file), 'r')
-            self.file_dict[h5_file] = self._length + len(list(f.keys())) 
-            self._length += len(list(f.keys()))
+        for k in range(len(rgb_files)):
+            # Read images as a NumPy array
 
-
-
-            #for k in range(len(list(f.keys()))):
-            #    
-            #    images.append(f[f"step_{k}"]["obs"]["central_rgb"]["data"])
-            #    command.append(f[f"step_{k}"]["obs"]["gnss"]["command"][0])
-            #    speed.append(f[f"step_{k}"]["obs"]["speed"]["speed"][0])
-            #    throttle.append(f[f"step_{k}"]["supervision"]["action"][0])
-            #    steer.append(f[f"step_{k}"]["supervision"]["action"][1])
-            #    brake.append(f[f"step_{k}"]["supervision"]["action"][2])
-            f.close()
-        #self._images = torch.stack([torch.from_numpy(np.transpose(im[:], (2, 0, 1))) for im in images], dim = 0)
-        #self._images = images
-        #self._command = torch.from_numpy(np.array(command)).unsqueeze(1)
-        #self._speed = torch.from_numpy(np.array(speed)).unsqueeze(1)
-        #self._steer = torch.from_numpy(np.array(steer)).unsqueeze(1)
-        #self._throttle = torch.from_numpy(np.array(throttle)).unsqueeze(1)
-        #self._brake = torch.from_numpy(np.array(brake)).unsqueeze(1)
-        #self._length = len(self._images)
+            self._images[k] = torch.permute(torch.from_numpy(np.array(Image.open(
+                os.path.join(self.data_root, "rgb", rgb_files[k]))))[:, :, :3], (2, 0, 1))
+            # Read steer angle command from json file
+            with open(os.path.join(self.data_root, "measurements", measurements_actions[k]), "r") as f:
+                json_content = json.load(f)
+                self._steer[k] = json_content["steer"]
+                self._throttle[k] = json_content["throttle"]
+                self._brake[k] = json_content["brake"]
+                self._speed[k] = json_content["speed"]
+                self._command[k] = json_content["command"]
+                self._route_dist[k] = json_content["route_dist"]
+                self._route_angle[k] = json_content["route_angle"]
+                self._lane_dist[k] = json_content["lane_dist"]
+                self._lane_angle[k] = json_content["lane_angle"]
+                self._hazard[k] = json_content["hazard"]
+                self._hazard_dist[k] = json_content["hazard_dist"]
+                self._tl_state[k] = json_content["tl_state"]
+                self._tl_dist[k] = json_content["tl_dist"]
+                self._is_junction[k] = json_content["is_junction"]
 
         self.transform = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
-            transforms.Lambda(lambda x: x/255),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
                                  0.229, 0.224, 0.225]),
         ])
@@ -82,37 +86,13 @@ class ExpertDataset(Dataset):
     def __getitem__(self, index):
         """Return RGB images and measurements"""
 
-        speed = torch.zeros(1, dtype = torch.float32)
-        command = torch.zeros(1, dtype = torch.float32)
-        throttle = torch.zeros(1, dtype = torch.float32)
-        steer = torch.zeros(1, dtype = torch.float32)
-        brake = torch.zeros(1, dtype = torch.float32)
-
-        v_ = 0
-        for (k, v) in self.file_dict.items():
-
-            if index == 0 or index < v:
-                f = h5py.File(os.path.join(self.data_root, k), 'r', libver = 'latest', swmr=True)
-                image = self.transform(torch.Tensor(np.transpose(f[f"step_{index - v_}"]["obs"]["central_rgb"]["data"][:], (2, 0, 1))))
-                command[0] = f[f"step_{index - v_}"]["obs"]["gnss"]["command"][0]
-                speed[0] = float(f[f"step_{index - v_}"]["obs"]["speed"]["speed"][0])
-                throttle[0] = float(f[f"step_{index - v_}"]["supervision"]["action"][0])
-                steer[0] = float(f[f"step_{index - v_}"]["supervision"]["action"][1])
-                brake[0] = float(f[f"step_{index - v_}"]["supervision"]["action"][2])
-                f.close()
-                break
-            v_ = v
-
-
         if self.learning_type == LearningType.IMITATION:
 
-            return image, command, speed, throttle, steer, brake
+            return self.transform(self._images[index]), self._command[index], self._speed[index], self._steer[index], self._throttle[index], self._brake[index]
 
         elif self.learning_type == LearningType.AFFORDANCE:
 
-            NotImplementedError(
-                "Data acquisition for affordance learning is not implemented yet")
-
+            return self._images[index], self._command[index], self._lane_dist[index], self._lane_angle[index], self._tl_dist[index], self._tl_state[index]
 
         elif self.learning_type == LearningType.REINFORCEMENT:
 
@@ -131,8 +111,7 @@ class ExpertDataset(Dataset):
 if __name__ == "__main__":
 
     expert_dataset = ExpertDataset(
-        "/home/vaydingul20/Documents/Codes/carla_learning/dataset/train/expert/",
-         learning_type=LearningType.IMITATION)
+        "./dataset_expert/", learning_type=LearningType.IMITATION)
 
     train_loader = DataLoader(expert_dataset, batch_size=1, shuffle=True,
                               drop_last=True)

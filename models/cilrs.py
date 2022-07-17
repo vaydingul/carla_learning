@@ -89,7 +89,7 @@ class CILRSLoss(nn.Module):
         """L1 loss for speed and L2 loss for action"""
         speed_loss = self.speed_loss(speed_pred, speed_gt)
         action_loss = self.action_loss(action_pred, action_gt)
-        return (1-self.weight) * speed_loss + self.weight * action_loss
+        return (1-self.weight) * speed_loss + self.weight * action_loss, speed_loss, action_loss
 
 
 class CILRS(nn.Module):
@@ -106,7 +106,7 @@ class CILRS(nn.Module):
         self.branched_encoder = Branch(config["branched_encoder_input_dimension"], config["branched_encoder_output_dimension"], config["branched_encoder_hidden_layer_dimensions"], config["number_of_commands"], 
                                         activation_function_map[config["branched_encoder_hidden_activation"]], activation_function_map[config["branched_encoder_final_activation"]])
 
-        self.loss_criterion = CILRSLoss()
+        self.loss_criterion = CILRSLoss(weight = config["loss_weight"])
         self.optimizer = torch.optim.Adam(self.parameters(), lr=config["learning_rate"])
         
     def forward(self, img, speed, command):

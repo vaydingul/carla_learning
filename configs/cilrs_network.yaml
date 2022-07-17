@@ -32,3 +32,7 @@ branched_encoder_final_activation : "tanh"
 
 number_of_commands :  6
 learning_rate : 0.0001
+loss_weight : 0.7
+num_epochs : 5
+batch_size : 157
+save_path : "cilrs_model"
