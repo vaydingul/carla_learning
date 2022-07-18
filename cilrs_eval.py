@@ -14,7 +14,7 @@ class Evaluator():
 
     def load_agent(self):
         # Load model from CILRS checkpoint
-        model = torch.load("cilrs_model.ckpt")
+        model = torch.load("cilrs_model2022-07-18-01-02-53.ckpt")
         model.eval()
         model.to('cpu')
         return model

@@ -95,7 +95,10 @@ def main(config_path, train_path, val_path):
     # Save path is the save path from config + date time in string format
     datestr = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
     save_path = model_config["save_path"] + datestr + ".ckpt"
-
+    
+    os.makedirs("ckpts", exist_ok=True)
+    
+    
     run = wandb.init(project="carla_learning", group = "cilrs", name="cilrs_train", config = model_config)
     run.define_metric("train/step")
     run.define_metric("val/step")
@@ -115,8 +118,12 @@ def main(config_path, train_path, val_path):
             print("Alert time!")
             run.alert("Epoch-wise Info", "Epoch {}/{}".format(i + 1, num_epochs))
 
-    torch.save(model, save_path)
+            save_path_ = os.path.join(Path("ckpts"), str(i+1) + "-" + save_path)
+
+            torch.save(model, save_path_)
+            
     #plot_losses(train_losses, val_losses)
+
     run.finish()
 
 if __name__ == "__main__":
