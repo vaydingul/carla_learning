@@ -30,7 +30,7 @@ def validate(model, dataloader, epoch, run):
             speed_pred, action_pred = model(image.to('cuda:0'), speed.to('cuda:0'), command.to('cuda:0'))
             loss, speed_loss, action_loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
             test_loss += loss.item()
-            step = epoch * len(dataloader.dataset) + counter * image.shape[0] + image.shape[0]
+            step = epoch * len(dataloader.dataset) + counter * dataloader.batch_size + image.shape[0]
             run.log({"val/step": step, "val/loss": loss.item(), "val/speed_loss": speed_loss.item(), "val/action_loss": action_loss.item()})
 
             counter += 1#image.shape[0] # batch size
@@ -54,7 +54,7 @@ def train(model, dataloader, epoch, run):
         loss.backward()
         model.optimizer.step()
         train_loss += loss.item()
-        step = epoch * len(dataloader.dataset) + counter * image.shape[0] + image.shape[0]
+        step = epoch * len(dataloader.dataset) + counter * dataloader.batch_size + image.shape[0]
         run.log({"train/step": step, "train/loss": loss.item(), "train/speed_loss": speed_loss.item(), "train/action_loss": action_loss.item()})
         counter += 1#image.shape[0] # batch size
     # Report the latest loss on that epoch
