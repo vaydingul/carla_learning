@@ -74,15 +74,15 @@ def plot_losses(train_loss, val_loss):
     plt.show()
 
     
-def main(config):
+def main(config_path, train_path, val_path):
 
     
 
     # Change these paths to the correct paths in your downloaded expert dataset
-    train_root = os.path.join("dataset_expert/", "")
-    val_root = os.path.join("dataset_expert/", "")
+    train_root = Path(train_path)
+    val_root = Path(val_path)
 
-    model_config = get_config(os.path.join(Path("configs"), config))
+    model_config = get_config(os.path.join(Path("configs"), config_path))
     model = CILRS(model_config)
 
 
@@ -122,5 +122,8 @@ def main(config):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="cilrs_network.yaml", help="Path to config file")
+    parser.add_argument("--train_path", default="dataset_expert", help="Path to training dataset")
+    parser.add_argument("--val_path", default="dataset_expert", help="Path to validation dataset")
+
     args = parser.parse_args()
-    main(args.config)
+    main(args.config, args.train_path, args.val_path)
