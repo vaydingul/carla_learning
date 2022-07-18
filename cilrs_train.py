@@ -23,6 +23,8 @@ def validate(model, dataloader, epoch, run):
     model.to('cuda:0')
 
     test_loss = 0
+    test_action_loss = 0
+    test_speed_loss = 0
     counter = 0
     with torch.no_grad():
         for batch in dataloader:
@@ -30,13 +32,20 @@ def validate(model, dataloader, epoch, run):
             speed_pred, action_pred = model(image.to('cuda:0'), speed.to('cuda:0'), command.to('cuda:0'))
             loss, speed_loss, action_loss = model.loss_criterion(speed_pred, speed.to('cuda:0'), action_pred, torch.cat((steer.to('cuda:0'), throttle.to('cuda:0') - brake.to('cuda:0')), dim=1))
             test_loss += loss.item()
-            step = epoch * len(dataloader.dataset) + counter * dataloader.batch_size + image.shape[0]
-            run.log({"val/step": step, "val/loss": loss.item(), "val/speed_loss": speed_loss.item(), "val/action_loss": action_loss.item()})
+            test_action_loss += action_loss.item()
+            test_speed_loss += speed_loss.item()
+            #step = epoch * len(dataloader.dataset) + counter * dataloader.batch_size + image.shape[0]
 
             counter += 1#image.shape[0] # batch size
-
+        
     # Report average loss on the validation dataset
-    return test_loss / counter
+    average_loss = test_loss / counter
+    average_action_loss = test_action_loss / counter
+    average_speed_loss = test_speed_loss / counter
+
+    run.log({"val/epoch": epoch + 1, "val/loss": average_loss, "val/speed_loss": average_speed_loss, "val/action_loss": average_action_loss}, step=epoch + 1)
+
+    return average_loss
 
 
 def train(model, dataloader, epoch, run):
@@ -55,7 +64,7 @@ def train(model, dataloader, epoch, run):
         model.optimizer.step()
         train_loss += loss.item()
         step = epoch * len(dataloader.dataset) + counter * dataloader.batch_size + image.shape[0]
-        run.log({"train/step": step, "train/loss": loss.item(), "train/speed_loss": speed_loss.item(), "train/action_loss": action_loss.item()})
+        run.log({"train/step": step, "train/loss": loss.item(), "train/speed_loss": speed_loss.item(), "train/action_loss": action_loss.item()}, step=step)
         counter += 1#image.shape[0] # batch size
     # Report the latest loss on that epoch
     return train_loss / counter
@@ -71,7 +80,6 @@ def plot_losses(train_loss, val_loss):
     plt.ylabel("Loss")
     plt.xlabel("Epoch")
     plt.savefig("losses_cilrs.png")
-    plt.show()
 
     
 def main(config_path, train_path, val_path):
@@ -92,9 +100,6 @@ def main(config_path, train_path, val_path):
     # You can change these hyper parameters freely, and you can add more
     num_epochs = model_config["num_epochs"]
     batch_size = model_config["batch_size"]
-    # Save path is the save path from config + date time in string format
-    datestr = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
-    save_path = model_config["save_path"] + datestr + ".ckpt"
     
     os.makedirs("ckpts", exist_ok=True)
     
@@ -110,20 +115,26 @@ def main(config_path, train_path, val_path):
 
     train_losses = []
     val_losses = []
+
+    run.alert("Training started", "Training started")
     for i in range(num_epochs):
+
         train_losses.append(train(model, train_loader, i, run))
         val_losses.append(validate(model, val_loader, i, run))
         
         if ((i+1) % 5) == 0:
-            print("Alert time!")
+
             run.alert("Epoch-wise Info", "Epoch {}/{}".format(i + 1, num_epochs))
 
+            # Save path is the save path from config + date time in string format
+            datestr = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+            save_path = model_config["save_path"] + datestr + ".ckpt"
             save_path_ = os.path.join(Path("ckpts"), str(i+1) + "-" + save_path)
 
             torch.save(model, save_path_)
             
-    #plot_losses(train_losses, val_losses)
-
+    plot_losses(train_losses, val_losses)
+    run.save(save_path_)
     run.finish()
 
 if __name__ == "__main__":
