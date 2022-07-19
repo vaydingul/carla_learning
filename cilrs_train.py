@@ -43,7 +43,7 @@ def validate(model, dataloader, epoch, run):
     average_action_loss = test_action_loss / counter
     average_speed_loss = test_speed_loss / counter
 
-    run.log({"val/step": step, "val/loss": average_loss, "val/speed_loss": average_speed_loss, "val/action_loss": average_action_loss}, step=step)
+    run.log({"val/step": step, "val/loss": average_loss, "val/speed_loss": average_speed_loss, "val/action_loss": average_action_loss})
 
     return average_loss
 
@@ -64,7 +64,7 @@ def train(model, dataloader, epoch, run):
         model.optimizer.step()
         train_loss += loss.item()
         step = epoch * len(dataloader.dataset) + counter * dataloader.batch_size + image.shape[0]
-        run.log({"train/step": step, "train/loss": loss.item(), "train/speed_loss": speed_loss.item(), "train/action_loss": action_loss.item()}, step=step)
+        run.log({"train/step": step, "train/loss": loss.item(), "train/speed_loss": speed_loss.item(), "train/action_loss": action_loss.item()})
         counter += 1#image.shape[0] # batch size
     # Report the latest loss on that epoch
     return train_loss / counter
@@ -104,7 +104,7 @@ def main(config_path, train_path, val_path):
     os.makedirs("ckpts", exist_ok=True)
     
     
-    run = wandb.init(project="carla_learning", group = "cilrs", name="cilrs_train__", config = model_config)
+    run = wandb.init(project="carla_learning", group = "cilrs", name="cilrs_train_", config = model_config)
     run.define_metric("train/step")
     run.define_metric("val/step")
     run.define_metric(name = "train/*", step_metric = "train/step")
