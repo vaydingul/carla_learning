@@ -82,7 +82,7 @@ def plot_losses(train_loss, val_loss):
     plt.savefig("losses_cilrs.png")
 
     
-def main(config_path, train_path, val_path):
+def main(config_path, train_path, val_path, wb_name):
 
     
 
@@ -104,7 +104,7 @@ def main(config_path, train_path, val_path):
     os.makedirs("ckpts", exist_ok=True)
     
     
-    run = wandb.init(project="carla_learning", group = "cilrs", name="cilrs_train_", config = model_config)
+    run = wandb.init(project="carla_learning", group = "cilrs", name=wb_name, config = model_config)
     run.define_metric("train/step")
     run.define_metric("val/step")
     run.define_metric(name = "train/*", step_metric = "train/step")
@@ -142,6 +142,6 @@ if __name__ == "__main__":
     parser.add_argument("--config", default="cilrs_network.yaml", help="Path to config file")
     parser.add_argument("--train_path", default="dataset_expert", help="Path to training dataset")
     parser.add_argument("--val_path", default="dataset_expert", help="Path to validation dataset")
-
+    parser.add_argument("--wb_name", default="cilrs_train", help="Name of the run in wandb")
     args = parser.parse_args()
-    main(args.config, args.train_path, args.val_path)
+    main(args.config, args.train_path, args.val_path, args.wb_name)

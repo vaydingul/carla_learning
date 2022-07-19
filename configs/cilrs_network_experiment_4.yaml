@@ -3,7 +3,7 @@ input_image_channels : 3
 input_image_format : "BRG"
 input_image_type : "uint8"
 
-image_encoder_type : "resnet18"
+image_encoder_type : "resnet34"
 
 measurement_encoder_input_dimension : 1
 measurement_encoder_hidden_layer_dimensions:
@@ -35,4 +35,4 @@ learning_rate : 0.0001
 loss_weight : 0.7
 num_epochs : 25
 batch_size : 512
-save_path : "cilrs_model_epoch_25"
+save_path : "cilrs_model_epoch_25_resnet_34"
