@@ -6,6 +6,7 @@ from carla_env.env import Env
 import numpy as np
 import torch
 from torchvision import transforms
+import argparse
 class Evaluator():
     def __init__(self, env, config):
         self.env = env
@@ -14,7 +15,8 @@ class Evaluator():
 
     def load_agent(self):
         # Load model from CILRS checkpoint
-        model = torch.load("cilrs_model2022-07-18-01-02-53.ckpt")
+        #model = torch.load("cilrs_model2022-07-18-01-02-53.ckpt")
+        model = torch.load(self.config["ckpt_file"])
         model.eval()
         model.to('cpu')
         return model
@@ -74,14 +76,17 @@ class Evaluator():
             print(f"{key}: {val}/100")
 
 
-def main():
+def main(ckpt_file):
     with open(os.path.join("configs", "cilrs.yaml"), "r") as f:
         config = yaml.full_load(f)
-
+        config["ckpt_file"] = ckpt_file
     with Env(config) as env:
         evaluator = Evaluator(env, config)
         evaluator.evaluate()
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ckpt_file", type=str)
+    args = parser.parse_args()
+    main(args.ckpt_file)
