@@ -101,7 +101,13 @@ def main(config_path, train_path, val_path, wb_name):
     num_epochs = model_config["num_epochs"]
     batch_size = model_config["batch_size"]
     
-    os.makedirs("ckpts", exist_ok=True)
+    checkpoint_path = Path("ckpts")
+
+    date_ = Path(datetime.today().strftime('%Y-%m-%d'))
+    time_ = Path(datetime.today().strftime('%H-%M-%S'))
+
+    checkpoint_path = checkpoint_path / date_ / time_
+    checkpoint_path.mkdir(parents = True, exist_ok=True)
     
     
     run = wandb.init(project="carla_learning", group = "cilrs", name=wb_name, config = model_config)
@@ -127,14 +133,12 @@ def main(config_path, train_path, val_path, wb_name):
             run.alert("Epoch-wise Info", "Epoch {}/{}".format(i + 1, num_epochs))
 
             # Save path is the save path from config + date time in string format
-            datestr = datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
-            save_path = model_config["save_path"] + datestr + ".ckpt"
-            save_path_ = os.path.join(Path("ckpts"), str(i+1) + "-" + save_path)
+            save_path = os.path.join(checkpoint_path, model_config["save_path"] + "_" + str(i+1) + ".ckpt")
 
-            torch.save(model, save_path_)
+            torch.save(model, save_path)
             
     plot_losses(train_losses, val_losses)
-    run.save(save_path_)
+    run.save(save_path)
     run.finish()
 
 if __name__ == "__main__":
